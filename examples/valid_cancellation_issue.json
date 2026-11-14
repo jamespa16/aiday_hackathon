@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "idempotency_key": "issue-msg014",
+  "message_id": "msg_014",
+  "type": "issue.upsert",
+  "payload": {
+    "issue_id": "team_issue_006",
+    "thread_id": "thread_006",
+    "source_message_ids": ["msg_014"],
+    "title": "Cancel order ORD-1042",
+    "intent": "cancel_order",
+    "priority": "high",
+    "queue": "operations",
+    "order_id": "order_1042",
+    "extracted_fields": {},
+    "status": "resolved"
+  }
+}

@@ -1,0 +1,831 @@
+{
+  "schema_version": "1.0",
+  "sql": {
+    "tables": {
+      "customers": {
+        "customer_id": "TEXT",
+        "name": "TEXT",
+        "email": "TEXT"
+      },
+      "orders": {
+        "order_id": "TEXT",
+        "order_number": "TEXT",
+        "customer_id": "TEXT",
+        "status": "TEXT",
+        "total_cents": "INTEGER",
+        "captured_cents": "INTEGER",
+        "refunded_cents": "INTEGER",
+        "shipping_address": "TEXT",
+        "line1": "TEXT",
+        "city": "TEXT",
+        "region": "TEXT",
+        "postal_code": "TEXT",
+        "country": "TEXT",
+        "created_at": "TEXT",
+        "delivered_at": "TEXT",
+        "version": "INTEGER"
+      },
+      "shipments": {
+        "shipment_id": "TEXT",
+        "order_id": "TEXT",
+        "carrier": "TEXT",
+        "tracking_number": "TEXT",
+        "status": "TEXT",
+        "estimated_delivery_at": "TEXT"
+      },
+      "refunds": {
+        "refund_id": "TEXT",
+        "order_id": "TEXT",
+        "amount_cents": "INTEGER",
+        "reason": "TEXT",
+        "created_at": "TEXT"
+      }
+    },
+    "functions": [
+      "abs",
+      "avg",
+      "coalesce",
+      "count",
+      "date",
+      "datetime",
+      "ifnull",
+      "instr",
+      "julianday",
+      "length",
+      "like",
+      "likelihood",
+      "likely",
+      "lower",
+      "ltrim",
+      "max",
+      "min",
+      "nullif",
+      "printf",
+      "replace",
+      "round",
+      "rtrim",
+      "strftime",
+      "substr",
+      "substring",
+      "sum",
+      "time",
+      "total",
+      "trim",
+      "typeof",
+      "unicode",
+      "unlikely",
+      "upper"
+    ],
+    "row_limit": 200,
+    "execution_seconds": 1,
+    "response_bytes": 262144
+  },
+  "actions": {
+    "$defs": {
+      "Address": {
+        "additionalProperties": false,
+        "properties": {
+          "line1": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Line1",
+            "type": "string"
+          },
+          "city": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "City",
+            "type": "string"
+          },
+          "region": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Region",
+            "type": "string"
+          },
+          "postal_code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Postal Code",
+            "type": "string"
+          },
+          "country": {
+            "maxLength": 2,
+            "minLength": 2,
+            "title": "Country",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line1",
+          "city",
+          "region",
+          "postal_code",
+          "country"
+        ],
+        "title": "Address",
+        "type": "object"
+      },
+      "AddressAction": {
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "message_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Message Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "order.change_address",
+            "title": "Type",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/AddressPayload"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "message_id",
+          "type",
+          "payload"
+        ],
+        "title": "AddressAction",
+        "type": "object"
+      },
+      "AddressPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "order_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Order Id",
+            "type": "string"
+          },
+          "expected_version": {
+            "minimum": 0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "const": "customer_request",
+            "title": "Reason",
+            "type": "string"
+          },
+          "shipping_address": {
+            "$ref": "#/$defs/Address"
+          }
+        },
+        "required": [
+          "order_id",
+          "expected_version",
+          "reason",
+          "shipping_address"
+        ],
+        "title": "AddressPayload",
+        "type": "object"
+      },
+      "CancelAction": {
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "message_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Message Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "order.cancel",
+            "title": "Type",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/CancelPayload"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "message_id",
+          "type",
+          "payload"
+        ],
+        "title": "CancelAction",
+        "type": "object"
+      },
+      "CancelPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "order_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Order Id",
+            "type": "string"
+          },
+          "expected_version": {
+            "minimum": 0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "const": "customer_request",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "expected_version",
+          "reason"
+        ],
+        "title": "CancelPayload",
+        "type": "object"
+      },
+      "ExtractedFields": {
+        "additionalProperties": false,
+        "properties": {
+          "shipping_address": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Address"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "order_number": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Order Number"
+          }
+        },
+        "title": "ExtractedFields",
+        "type": "object"
+      },
+      "IssueAction": {
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "message_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Message Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "issue.upsert",
+            "title": "Type",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/IssuePayload"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "message_id",
+          "type",
+          "payload"
+        ],
+        "title": "IssueAction",
+        "type": "object"
+      },
+      "IssuePayload": {
+        "additionalProperties": false,
+        "properties": {
+          "issue_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Issue Id",
+            "type": "string"
+          },
+          "thread_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "source_message_ids": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Source Message Ids",
+            "type": "array"
+          },
+          "title": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "intent": {
+            "enum": [
+              "order_status",
+              "cancel_order",
+              "change_address",
+              "refund_order",
+              "damaged_item",
+              "incorrect_item",
+              "other"
+            ],
+            "title": "Intent",
+            "type": "string"
+          },
+          "priority": {
+            "enum": [
+              "low",
+              "normal",
+              "high"
+            ],
+            "title": "Priority",
+            "type": "string"
+          },
+          "queue": {
+            "enum": [
+              "support",
+              "operations",
+              "finance",
+              "returns"
+            ],
+            "title": "Queue",
+            "type": "string"
+          },
+          "order_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Id"
+          },
+          "extracted_fields": {
+            "$ref": "#/$defs/ExtractedFields"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "waiting_customer",
+              "escalated",
+              "resolved"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issue_id",
+          "thread_id",
+          "source_message_ids",
+          "title",
+          "intent",
+          "priority",
+          "queue",
+          "order_id",
+          "status"
+        ],
+        "title": "IssuePayload",
+        "type": "object"
+      },
+      "RefundAction": {
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "message_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Message Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "order.refund",
+            "title": "Type",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/RefundPayload"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "message_id",
+          "type",
+          "payload"
+        ],
+        "title": "RefundAction",
+        "type": "object"
+      },
+      "RefundPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "order_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Order Id",
+            "type": "string"
+          },
+          "expected_version": {
+            "minimum": 0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "const": "customer_request",
+            "title": "Reason",
+            "type": "string"
+          },
+          "amount_cents": {
+            "exclusiveMinimum": 0,
+            "maximum": 100000000,
+            "title": "Amount Cents",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "order_id",
+          "expected_version",
+          "reason",
+          "amount_cents"
+        ],
+        "title": "RefundPayload",
+        "type": "object"
+      },
+      "ReplyAction": {
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "idempotency_key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "message_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Message Id",
+            "type": "string"
+          },
+          "type": {
+            "const": "reply.send",
+            "title": "Type",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/$defs/ReplyPayload"
+          }
+        },
+        "required": [
+          "schema_version",
+          "idempotency_key",
+          "message_id",
+          "type",
+          "payload"
+        ],
+        "title": "ReplyAction",
+        "type": "object"
+      },
+      "ReplyFacts": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending",
+                  "processing",
+                  "shipped",
+                  "delivered",
+                  "cancelled"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status"
+          },
+          "tracking_number": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tracking Number"
+          },
+          "estimated_delivery_at": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Estimated Delivery At"
+          },
+          "refund_cents": {
+            "anyOf": [
+              {
+                "maximum": 100000000,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Refund Cents"
+          },
+          "shipping_address": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Address"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "ReplyFacts",
+        "type": "object"
+      },
+      "ReplyPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "in_reply_to": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "In Reply To",
+            "type": "string"
+          },
+          "template_id": {
+            "enum": [
+              "order_status",
+              "cancellation_confirmed",
+              "address_changed",
+              "refund_confirmed",
+              "policy_refusal",
+              "clarification",
+              "escalation"
+            ],
+            "title": "Template Id",
+            "type": "string"
+          },
+          "order_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order Id"
+          },
+          "supporting_action_ids": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Supporting Action Ids",
+            "type": "array"
+          },
+          "facts": {
+            "$ref": "#/$defs/ReplyFacts"
+          },
+          "requested_fields": {
+            "items": {
+              "enum": [
+                "order_number",
+                "shipping_address",
+                "shipping_address.line1",
+                "shipping_address.city",
+                "shipping_address.region",
+                "shipping_address.postal_code",
+                "shipping_address.country"
+              ],
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Requested Fields",
+            "type": "array"
+          },
+          "policy_reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "already_shipped",
+                  "refund_window_expired",
+                  "already_refunded",
+                  "not_eligible",
+                  "ownership_unverified",
+                  "damaged_item",
+                  "incorrect_item",
+                  "unsupported_request"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Policy Reason"
+          }
+        },
+        "required": [
+          "in_reply_to",
+          "template_id",
+          "order_id"
+        ],
+        "title": "ReplyPayload",
+        "type": "object"
+      }
+    },
+    "discriminator": {
+      "mapping": {
+        "issue.upsert": "#/$defs/IssueAction",
+        "order.cancel": "#/$defs/CancelAction",
+        "order.change_address": "#/$defs/AddressAction",
+        "order.refund": "#/$defs/RefundAction",
+        "reply.send": "#/$defs/ReplyAction"
+      },
+      "propertyName": "type"
+    },
+    "oneOf": [
+      {
+        "$ref": "#/$defs/IssueAction"
+      },
+      {
+        "$ref": "#/$defs/CancelAction"
+      },
+      {
+        "$ref": "#/$defs/AddressAction"
+      },
+      {
+        "$ref": "#/$defs/RefundAction"
+      },
+      {
+        "$ref": "#/$defs/ReplyAction"
+      }
+    ]
+  },
+  "query": {
+    "additionalProperties": false,
+    "properties": {
+      "message_id": {
+        "maxLength": 128,
+        "minLength": 1,
+        "title": "Message Id",
+        "type": "string"
+      },
+      "sql": {
+        "maxLength": 16000,
+        "minLength": 1,
+        "title": "Sql",
+        "type": "string"
+      },
+      "parameters": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "title": "Parameters",
+        "type": "object"
+      }
+    },
+    "required": [
+      "message_id",
+      "sql"
+    ],
+    "title": "QueryRequest",
+    "type": "object"
+  },
+  "completion": {
+    "additionalProperties": false,
+    "properties": {
+      "idempotency_key": {
+        "maxLength": 128,
+        "minLength": 1,
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "disposition": {
+        "enum": [
+          "processed",
+          "ignored"
+        ],
+        "title": "Disposition",
+        "type": "string"
+      }
+    },
+    "required": [
+      "idempotency_key",
+      "disposition"
+    ],
+    "title": "CompletionRequest",
+    "type": "object"
+  }
+}

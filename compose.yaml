@@ -1,0 +1,22 @@
+services:
+  server:
+    build: .
+    hostname: aiday-server
+    environment:
+      AIDAY_ADMIN_TOKEN: ${AIDAY_ADMIN_TOKEN:?Set a random organizer token of at least 24 characters}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - event-data:/data
+    networks:
+      event:
+        aliases:
+          - aiday-server
+    restart: unless-stopped
+
+networks:
+  event:
+    name: aiday-event
+
+volumes:
+  event-data:

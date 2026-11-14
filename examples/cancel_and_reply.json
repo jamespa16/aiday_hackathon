@@ -1,0 +1,57 @@
+{
+  "description": "Valid Tier 3 cancellation and grounded structured reply example. Substitute IDs, current version, and refund amount from the public query result.",
+  "message_id": "msg_014",
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/v1/query",
+      "json": {
+        "message_id": "msg_014",
+        "sql": "SELECT order_id, order_number, status, captured_cents, refunded_cents, version FROM orders WHERE order_number = :number",
+        "parameters": {"number": "ORD-1042"}
+      },
+      "response_pointer": "$.columns, $.rows[0]"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/actions",
+      "json": {
+        "schema_version": "1.0",
+        "idempotency_key": "cancel-msg014-order1042",
+        "message_id": "msg_014",
+        "type": "order.cancel",
+        "payload": {
+          "order_id": "order_1042",
+          "expected_version": 3,
+          "reason": "customer_request"
+        }
+      },
+      "response_pointer": "$.action_id, $.type, $.result, $.sequence"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/actions",
+      "json": {
+        "schema_version": "1.0",
+        "idempotency_key": "reply-msg014",
+        "message_id": "msg_014",
+        "type": "reply.send",
+        "payload": {
+          "in_reply_to": "msg_014",
+          "template_id": "cancellation_confirmed",
+          "order_id": "order_1042",
+          "supporting_action_ids": ["action_cancel_014"],
+          "facts": {"refund_cents": 4999},
+          "requested_fields": []
+        }
+      },
+      "response_pointer": "$.action_id, $.result.rendered_body, $.sequence"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/messages/msg_014/complete",
+      "json": {"idempotency_key": "complete-msg014", "disposition": "processed"},
+      "response_pointer": "$.sequence, $.result"
+    }
+  ]
+}
